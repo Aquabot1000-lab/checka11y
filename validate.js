@@ -1,0 +1,7 @@
+const {scan}=require('./scan');const pa11y=require('pa11y');
+const sites=['https://www.w3.org/WAI/demos/bad/before/home.html','https://www.w3.org/WAI/demos/bad/after/home.html','https://www.w3.org/WAI/demos/bad/before/news.html','https://dequeuniversity.com/demo/mars/','https://webaim.org/','https://example.com/','https://this-domain-does-not-exist-xyz123.com/'];
+(async()=>{const out=[];for(const u of sites){const t=Date.now();let ours,err;try{ours=await scan(u,1)}catch(e){err=e.message}const d1=Date.now()-t;
+ let pa={},pe;for(const runner of ['axe','htmlcs']){try{const r=await pa11y(u,{runners:[runner],standard:'WCAG2AA',timeout:40000,chromeLaunchConfig:{executablePath:'/usr/bin/google-chrome',args:['--no-sandbox']}});pa[runner]=r.issues.filter(i=>i.type==='error')}catch(e){pa[runner]=null;pe=e.message}}
+ const oursRules=new Set((ours?.pages[0]?.violations||[]).map(v=>v.id));const paAxe=new Set((pa.axe||[]).map(i=>i.code));
+ out.push({u,ms:d1,err:err||ours?.pages[0]?.error,ours:ours?.totalIssues,oursRules:[...oursRules],paAxeCount:pa.axe?.length,paAxeOnly:[...paAxe].filter(x=>!oursRules.has(x)),oursOnly:[...oursRules].filter(x=>!paAxe.has(x)),htmlcs:pa.htmlcs?.length,htmlcsCodes:[...new Set((pa.htmlcs||[]).map(i=>i.code.split('.').slice(3,5).join('.')))].slice(0,8),pe})}
+ require('fs').writeFileSync('validation.json',JSON.stringify(out,null,1));console.log(JSON.stringify(out,null,1))})();
