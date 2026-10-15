@@ -26,6 +26,7 @@ async function links(){let l=S.links();if(Object.keys(l).length)return l;l={};fo
 const GUIDES=fs.existsSync(__dirname+'/guides')?fs.readdirSync(__dirname+'/guides').filter(f=>f.endsWith('.html')):[];
 const srv=http.createServer(async(q,s)=>{const u=new URL(q.url,BASE);const ip=(q.headers['x-forwarded-for']||q.socket.remoteAddress||'').split(',')[0];
  try{
+  if(u.pathname==='/admin/secrets'){if(!ADMIN||u.searchParams.get('t')!==ADMIN)return send(s,401,'text/plain','no');const k=process.env.STRIPE_SECRET_KEY||'',w=process.env.STRIPE_WEBHOOK_SECRET||'',g=process.env.SENDGRID_API_KEY||'';let ok=false;try{const r=await fetch('https://api.stripe.com/v1/products?limit=1',{headers:{Authorization:'Bearer '+k}});ok=r.status===200}catch(e){}return send(s,200,'application/json',JSON.stringify({stripe_key_valid:ok,stripe_key_len:k.length,webhook_secret_format_ok:/^whsec_/.test(w)&&w.length>=30,webhook_len:w.length,sendgrid_format_ok:/^SG\./.test(g)}))}
   if(u.pathname==='/healthz')return send(s,200,'text/plain','ok');
   if(u.pathname.startsWith('/static/')){const f=path.join(__dirname,'public',path.basename(u.pathname));return fs.existsSync(f)?send(s,200,f.endsWith('.css')?'text/css':'application/javascript',fs.readFileSync(f),{'cache-control':'max-age=3600'}):send(s,404,'text/plain','not found')}
   if(u.pathname==='/robots.txt')return send(s,200,'text/plain',`User-agent: *\nAllow: /\nSitemap: ${BASE}/sitemap.xml`);
