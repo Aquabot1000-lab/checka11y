@@ -34,7 +34,7 @@ const srv=http.createServer(async(q,s)=>{const u=new URL(q.url,BASE);const ip=(q
   if(u.pathname==='/api/scan'&&q.method==='POST'){if(limited(ip))return json(s,{error:'Too many scans from your network. Try again in an hour.'},429);
     const b=JSON.parse(await body(q)||'{}');let url;try{url=validUrl(String(b.url||''))}catch{return json(s,{error:'Enter a valid public website address.'},400)}
     try{const {id,r}=await runScan(url,'free',1);const v=r.pages[0].violations||[];const tk=id?(await L.rpc2('scan_token',{id}))?.view:null;
-      return json(s,{scan_id:id,view:tk,url:r.url,total:r.totalIssues,critical:r.criticalOrSerious,top:v.slice(0,3).map(x=>({help:x.help,impact:x.impact,count:x.count})),hidden:Math.max(0,v.length-3)})}
+      return json(s,{scan_id:id,view:tk,url:r.url,total:r.totalIssues,critical:r.criticalOrSerious,warning:r.pages[0].warning,top:v.slice(0,3).map(x=>({help:x.help,impact:x.impact,count:x.count})),hidden:Math.max(0,v.length-3)})}
     catch(e){return json(s,{error:'We could not load that page. Check the address and that the site is online. ('+String(e.message).slice(0,120)+')'},422)}}
   if(u.pathname==='/api/unlock'&&q.method==='POST'){const b=JSON.parse(await body(q)||'{}');const email=String(b.email||'').trim().toLowerCase();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>200)return json(s,{error:'Enter a valid email.'},400);
