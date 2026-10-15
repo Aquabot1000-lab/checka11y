@@ -1,6 +1,6 @@
-How to Make Your Website Keyboard Accessible (WCAG 2.1.1, 2.4.7) | CheckA11y
+How to Make Your Website Keyboard Accessible (WCAG 2.1.1, 2.4.7) | Welcome Check Web
 Test and fix keyboard navigation and visible focus. Automated scanners can't fully check this, so here's a 5-minute manual test.
 <h1>How to make your site keyboard accessible</h1>
 <p>Automated scanners, including ours, can't fully test keyboard use. This 5-minute manual check covers what they miss.</p>
 <h2>The 5-minute test</h2><ol><li>Click the address bar, then press <kbd>Tab</kbd> repeatedly.</li><li>Can you always see where you are? If not, the focus outline was removed (WCAG 2.4.7).</li><li>Can you reach every link, button, menu and form field? Open menus with <kbd>Enter</kbd> or <kbd>Space</kbd>.</li><li>Can you get out of every popup or menu with <kbd>Esc</kbd> or <kbd>Tab</kbd>? If you get stuck, that's a keyboard trap (WCAG 2.1.2).</li><li>Does the order make sense, top to bottom and left to right?</li></ol>
-<h2>Common fixes</h2><ul><li>Never use <code>outline:none</code> without a replacement. Use <code>:focus-visible{outline:3px solid #f59e0b}</code>.</li><li>Use real <code><button></code> and <code><a href></code> elements, not clickable <code><div></code>s.</li><li>Avoid a positive <code>tabindex</code>.</li></ul>
+<h2>Common fixes</h2><ul><li>Never use <code>outline:none</code> without a replacement. Use <code>:focus-visible{outline:3px solid #f59e0b}</code>.</li><li>Use real <code>&lt;button&gt;</code> and <code>&lt;a href&gt;</code> elements, not clickable <code>&lt;div&gt;</code>s.</li><li>Avoid a positive <code>tabindex</code>.</li></ul>
