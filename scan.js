@@ -1,10 +1,10 @@
 const puppeteer=require('puppeteer-core');const fs=require('fs');
-const {AxePuppeteer}=require('@axe-core/puppeteer');
+const {safeUrl}=require('./netguard');const {AxePuppeteer}=require('@axe-core/puppeteer');
 async function scan(url,maxPages=5){
   const b=await puppeteer.launch({executablePath:process.env.CHROME||'/usr/bin/google-chrome',args:['--no-sandbox','--headless=new','--disable-dev-shm-usage','--disable-gpu','--no-zygote']});
   const seen=new Set(),queue=[url],pages=[];const host=new URL(url).host;
   try{while(queue.length&&pages.length<maxPages){const u=queue.shift();if(seen.has(u))continue;seen.add(u);
-    const p=await b.newPage();await p.setBypassCSP(true);await p.setViewport({width:1280,height:1024});try{await p.goto(u,{waitUntil:'networkidle2',timeout:30000});
+    const p=await b.newPage();await p.setBypassCSP(true);await p.setViewport({width:1280,height:1024});await p.setRequestInterception(true);p.on('request',async rq=>{try{(await safeUrl(rq.url()))?rq.continue():rq.abort('blockedbyclient')}catch{}});try{if(!(await safeUrl(u)))throw new Error('Blocked: address is not a public website');await p.goto(u,{waitUntil:'networkidle2',timeout:30000});
       const TAGS=['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa'];let r;try{r=await new AxePuppeteer(p).withTags(TAGS).analyze()}catch(e){await p.addScriptTag({path:require.resolve('axe-core/axe.min.js')});r=await p.evaluate(t=>axe.run(document,{runOnly:t}),TAGS);r.framesSkipped=true}
       const nEl=await p.evaluate(()=>document.getElementsByTagName('*').length);const title=await p.title();const warn=(nEl<15||(await p.$('meta[http-equiv=refresh i]')&&nEl<80)||/just a moment|attention required|access denied|captcha/i.test(title))?'This page looked nearly empty or like a bot check, so the site may have blocked automated browsers. Results may not reflect what visitors see.':null;const links=await p.$$eval('a[href]',a=>a.map(x=>x.href));
       links.forEach(l=>{try{const x=new URL(l);x.hash='';if(x.host===host&&!seen.has(x.href)&&!/\.(pdf|jpg|png|zip)$/i.test(x.pathname))queue.push(x.href)}catch{}});
