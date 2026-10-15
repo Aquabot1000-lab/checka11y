@@ -1,8 +1,8 @@
 const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto');
 const {scan,report}=require('./scan');const L=require('./lib');const S=require('./stripe');
 const BASE=process.env.BASE_URL||'http://localhost:8080';const ADMIN=process.env.ADMIN_TOKEN||'';
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':'>','"':'"'}[c]));
-const page=(title,body,desc='')=>`<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name=description content="${esc(desc)}"><link rel=stylesheet href=/static/style.css></head><body><header><a href=/ class=logo>CheckA11y</a> <nav><a href=/pricing>Pricing</a> <a href=/agencies>Agencies</a> <a href=/guides>Guides</a></nav></header><main>${body}</main><footer><p class=disc>${L.DISCLAIMER}</p><p><a href=/terms>Terms</a> · <a href=/privacy>Privacy</a> · <a href=/support>Support</a></p></footer></body></html>`;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const page=(title,body,desc='')=>`<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name=description content="${esc(desc)}"><link rel=stylesheet href=/static/style.css></head><body><header><a href=/ class=logo>Welcome Check Web</a> <nav><a href=/pricing>Pricing</a> <a href=/agencies>Agencies</a> <a href=/guides>Guides</a></nav></header><main>${body}</main><footer><p class=disc>${L.DISCLAIMER}</p><p><a href=/terms>Terms</a> · <a href=/privacy>Privacy</a> · <a href=/support>Support</a></p></footer></body></html>`;
 let busy=0;const MAXC=+process.env.MAX_CONCURRENT||1;const queue=[];
 function slot(){return new Promise(r=>{if(busy<MAXC){busy++;r()}else queue.push(r)})}
 function free(){const n=queue.shift();if(n)n();else busy--}
