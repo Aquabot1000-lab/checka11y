@@ -1,0 +1,20 @@
+{
+ "name": "checka11y",
+ "version": "1.0.0",
+ "description": "",
+ "main": "index.js",
+ "scripts": {
+  "start": "node server.js"
+ },
+ "keywords": [],
+ "author": "",
+ "license": "ISC",
+ "dependencies": {
+  "@axe-core/puppeteer": "^4.13.0",
+  "axe-core": "^4.14.0",
+  "puppeteer-core": "23.11.1"
+ },
+ "devDependencies": {
+  "pa11y": "^10.0.0"
+ }
+}
