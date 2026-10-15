@@ -1,0 +1,9 @@
+const sess=localStorage.s||(localStorage.s=Math.random().toString(36).slice(2));const src=new URLSearchParams(location.search).get('utm_source')||document.referrer.split('/')[2]||'direct';
+fetch('/api/event',{method:'POST',body:JSON.stringify({kind:'visit',source:src,session:sess,path:location.pathname})});
+const f=document.getElementById('scanform');if(f)f.onsubmit=async e=>{e.preventDefault();const o=document.getElementById('out');o.textContent='Scanning… this can take up to 60 seconds.';o.focus();
+ const r=await fetch('/api/scan',{method:'POST',body:JSON.stringify({url:document.getElementById('u').value})});const d=await r.json();if(!r.ok){o.textContent=d.error;return}
+ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':'>','"':'"'}[c]));
+ o.innerHTML=`<div class=box><h2>${d.total} issue(s) found on this page</h2><p>${d.critical} are critical or serious.</p><ol>${d.top.map(t=>`<li class=${t.impact}><b>${esc(t.help)}</b> <span class=tag>${t.impact}</span> ×${t.count}</li>`).join('')}</ol>${d.hidden?`<p>+ ${d.hidden} more issue type(s) in the full report.</p>`:''}
+ <form id=uf><label for=em>Email me the full report with fix instructions</label><br><input id=em type=email required autocomplete=email> <button>Get full report</button></form><p class=disc>We'll email the report and occasional product updates. Unsubscribe anytime.</p></div>`;
+ document.getElementById('uf').onsubmit=async ev=>{ev.preventDefault();const x=await fetch('/api/unlock',{method:'POST',body:JSON.stringify({email:em.value,url:d.url,scan_id:d.scan_id,view:d.view,source:src})});const y=await x.json();if(!x.ok){alert(y.error);return}location.href=y.report}};
+document.querySelectorAll('a[data-plan]').forEach(a=>a.href='/checkout?plan='+a.dataset.plan+'&s='+sess);
