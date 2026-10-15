@@ -33,6 +33,7 @@ const srv=http.createServer(async(q,s)=>{const u=new URL(q.url,BASE);const ip=(q
   if(u.pathname==='/api/event'&&q.method==='POST'){const b=JSON.parse(await body(q)||'{}');if(['visit','scan_click','checkout_click','unlock_view'].includes(b.kind))L.rpc('event',{kind:b.kind,source:String(b.source||'').slice(0,80),session:String(b.session||'').slice(0,40),url:String(b.path||'').slice(0,200)}).catch(e=>L.logErr('event',e));return json(s,{})}
   if(u.pathname==='/api/scan'&&q.method==='POST'){if(limited(ip))return json(s,{error:'Too many scans from your network. Try again in an hour.'},429);
     const b=JSON.parse(await body(q)||'{}');let url;try{url=validUrl(String(b.url||''))}catch{return json(s,{error:'Enter a valid public website address.'},400)}
+    if(!(await require('./netguard').safeUrl(url)))return json(s,{error:'Enter a valid public website address.'},400);
     try{const {id,r}=await runScan(url,'free',1);const v=r.pages[0].violations||[];const tk=id?(await L.rpc2('scan_token',{id}))?.view:null;
       return json(s,{scan_id:id,view:tk,url:r.url,total:r.totalIssues,critical:r.criticalOrSerious,warning:r.pages[0].warning,top:v.slice(0,3).map(x=>({help:x.help,impact:x.impact,count:x.count})),hidden:Math.max(0,v.length-3)})}
     catch(e){return json(s,{error:'We could not load that page. Check the address and that the site is online. ('+String(e.message).slice(0,120)+')'},422)}}
