@@ -2,7 +2,9 @@ const http=require('http'),fs=require('fs'),path=require('path'),crypto=require(
 const {scan,report}=require('./scan');const L=require('./lib');const S=require('./stripe');
 const BASE=process.env.BASE_URL||'http://localhost:8080';const ADMIN=process.env.ADMIN_TOKEN||'';
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const page=(title,body,desc='')=>`<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name=description content="${esc(desc)}"><link rel=stylesheet href=/static/style.css></head><body><header><a href=/ class=logo>Welcome Check Web</a> <nav><a href=/pricing>Pricing</a> <a href=/agencies>Agencies</a> <a href=/guides>Guides</a></nav></header><main>${body}</main><footer><p class=disc>${L.DISCLAIMER}</p><p><a href=/terms>Terms</a> · <a href=/privacy>Privacy</a> · <a href=/support>Support</a></p></footer></body></html>`;
+const SITE=require('./site'),P=require('./pages'),zlib=require('zlib');
+const page=(title,body,desc='')=>SITE.layout({title:title+' | '+SITE.BRAND,desc:desc||title,path:'/x',body:`<div class="article"><div class="wrap narrow">${body}</div></div>`,noindex:true});
+const OG=fs.existsSync(__dirname+'/public/og.b64')?Buffer.from(fs.readFileSync(__dirname+'/public/og.b64','utf8'),'base64'):null;
 let busy=0;const MAXC=+process.env.MAX_CONCURRENT||1;const queue=[];
 function slot(){return new Promise(r=>{if(busy<MAXC){busy++;r()}else queue.push(r)})}
 function free(){const n=queue.shift();if(n)n();else busy--}
@@ -18,25 +20,29 @@ async function runScan(url,kind,maxPages,site_id){
   catch(e){if(id)await L.rpc('scan_finish',{id,status:'failed',ms:Date.now()-t,error:String(e.message)}).catch(()=>{});throw e}
   finally{free()}}
 function body(q){return new Promise((res,rej)=>{let d='';q.on('data',c=>{d+=c;if(d.length>1e6)q.destroy()});q.on('end',()=>res(d));q.on('error',rej)})}
-function send(s,code,type,data,extra={}){s.writeHead(code,{'content-type':type,...extra});s.end(data)}
+function send(s,code,type,data,extra={}){const h={'content-type':type,...extra};if(/text|javascript|json|xml|svg/.test(type)&&data&&data.length>1024&&/gzip/.test(s.req?.headers['accept-encoding']||'')){data=zlib.gzipSync(data);h['content-encoding']='gzip';h.vary='Accept-Encoding'}s.writeHead(code,h);s.end(data)}
 const json=(s,o,c=200)=>send(s,c,'application/json',JSON.stringify(o));
 function validUrl(t){const v=new URL(/^https?:\/\//i.test(t)?t:'https://'+t);if(!/^https?:$/.test(v.protocol))throw 0;
   if(/^(localhost|127\.|10\.|192\.168\.|169\.254\.|0\.|\[)/.test(v.hostname)||/^172\.(1[6-9]|2\d|3[01])\./.test(v.hostname)||v.hostname.endsWith('.internal'))throw 0;return v.href}
 async function links(){let l=S.links();if(Object.keys(l).length)return l;l={};for(const p of Object.keys(L.PLANS))l[p]=process.env['LINK_'+p.toUpperCase()]||'';return l}
 const GUIDES=fs.existsSync(__dirname+'/guides')?fs.readdirSync(__dirname+'/guides').filter(f=>f.endsWith('.html')):[];
-const srv=http.createServer(async(q,s)=>{const u=new URL(q.url,BASE);const ip=(q.headers['x-forwarded-for']||q.socket.remoteAddress||'').split(',')[0];
+const srv=http.createServer(async(q,s)=>{s.req=q;const u=new URL(q.url,BASE);const ip=(q.headers['x-forwarded-for']||q.socket.remoteAddress||'').split(',')[0];
  try{
   if(u.pathname==='/admin/secrets'){if(!ADMIN||u.searchParams.get('t')!==ADMIN)return send(s,401,'text/plain','no');const k=process.env.STRIPE_SECRET_KEY||'',w=process.env.STRIPE_WEBHOOK_SECRET||'',g=process.env.SENDGRID_API_KEY||'';let ok=false;try{const r=await fetch('https://api.stripe.com/v1/products?limit=1',{headers:{Authorization:'Bearer '+k}});ok=r.status===200}catch(e){}return send(s,200,'application/json',JSON.stringify({stripe_key_valid:ok,stripe_key_len:k.length,webhook_secret_format_ok:/^whsec_/.test(w)&&w.length>=30,webhook_len:w.length,sendgrid_format_ok:/^SG\./.test(g)}))}
   if(u.pathname==='/healthz')return send(s,200,'text/plain','ok');
-  if(u.pathname.startsWith('/static/')){const f=path.join(__dirname,'public',path.basename(u.pathname));return fs.existsSync(f)?send(s,200,f.endsWith('.css')?'text/css':'application/javascript',fs.readFileSync(f),{'cache-control':'max-age=3600'}):send(s,404,'text/plain','not found')}
-  if(u.pathname==='/robots.txt')return send(s,200,'text/plain',`User-agent: *\nAllow: /\nSitemap: ${BASE}/sitemap.xml`);
-  if(u.pathname==='/sitemap.xml')return send(s,200,'application/xml',`<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${['/','/pricing','/agencies','/guides',...GUIDES.map(g=>'/guides/'+g.replace('.html',''))].map(p=>`<url><loc>${BASE}${p}</loc></url>`).join('')}</urlset>`);
+  if(u.pathname.startsWith('/static/')){const f=path.join(__dirname,'public',path.basename(u.pathname));return fs.existsSync(f)?send(s,200,f.endsWith('.css')?'text/css; charset=utf-8':'application/javascript; charset=utf-8',fs.readFileSync(f),{'cache-control':'public, max-age=86400'}):send(s,404,'text/plain','not found')}
+  if(u.pathname==='/logo.svg'||u.pathname==='/favicon.svg')return send(s,200,'image/svg+xml',SITE.LOGO,{'cache-control':'public, max-age=604800'});
+  if(u.pathname==='/og.jpg'&&OG)return send(s,200,'image/jpeg',OG,{'cache-control':'public, max-age=604800'});
+  if(u.pathname==='/favicon.ico')return send(s,301,'text/plain','',{location:'/favicon.svg'});
+  if(u.pathname==='/llms.txt')return send(s,200,'text/plain; charset=utf-8',P.llms());
+  if(u.pathname==='/robots.txt')return send(s,200,'text/plain',`User-agent: *\nAllow: /\nDisallow: /r/\nDisallow: /admin/\nDisallow: /api/\nDisallow: /checkout\nDisallow: /cancel\nSitemap: ${BASE}/sitemap.xml`);
+  if(u.pathname==='/sitemap.xml')return send(s,200,'application/xml',P.sitemap());
   if(u.pathname==='/api/event'&&q.method==='POST'){const b=JSON.parse(await body(q)||'{}');if(['visit','scan_click','checkout_click','unlock_view'].includes(b.kind))L.rpc('event',{kind:b.kind,source:String(b.source||'').slice(0,80),session:String(b.session||'').slice(0,40),url:String(b.path||'').slice(0,200)}).catch(e=>L.logErr('event',e));return json(s,{})}
   if(u.pathname==='/api/scan'&&q.method==='POST'){if(limited(ip))return json(s,{error:'Too many scans from your network. Try again in an hour.'},429);
     const b=JSON.parse(await body(q)||'{}');let url;try{url=validUrl(String(b.url||''))}catch{return json(s,{error:'Enter a valid public website address.'},400)}
     if(!(await require('./netguard').safeUrl(url)))return json(s,{error:'Enter a valid public website address.'},400);
     try{const {id,r}=await runScan(url,'free',1);const v=r.pages[0].violations||[];const tk=id?(await L.rpc2('scan_token',{id}))?.view:null;
-      return json(s,{scan_id:id,view:tk,url:r.url,total:r.totalIssues,critical:r.criticalOrSerious,warning:r.pages[0].warning,top:v.slice(0,3).map(x=>({help:x.help,impact:x.impact,count:x.count})),hidden:Math.max(0,v.length-3)})}
+      return json(s,{scan_id:id,view:tk,url:r.url,total:r.totalIssues,critical:r.criticalOrSerious,score:SITE.score(v),counts:SITE.countsBy(v),warning:r.pages[0].warning,top:v.slice(0,3).map(x=>({id:x.id,help:x.help,impact:x.impact,count:x.count})),hidden:Math.max(0,v.length-3)})}
     catch(e){return json(s,{error:'We could not load that page. Check the address and that the site is online. ('+String(e.message).slice(0,120)+')'},422)}}
   if(u.pathname==='/api/unlock'&&q.method==='POST'){const b=JSON.parse(await body(q)||'{}');const email=String(b.email||'').trim().toLowerCase();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>200)return json(s,{error:'Enter a valid email.'},400);
@@ -45,7 +51,7 @@ const srv=http.createServer(async(q,s)=>{const u=new URL(q.url,BASE);const ip=(q
     L.sendMail(email,'Your accessibility scan report',`<p>Your report: <a href="${link}">${link}</a></p><p>${L.DISCLAIMER}</p>`).catch(()=>{});
     return json(s,{report:link})}
   let m;if((m=u.pathname.match(/^\/r\/([0-9a-f-]{36})$/))){const sc=await L.rpc2('get_scan',{id:m[1],view:u.searchParams.get('v')});if(!sc||!sc.report)return send(s,404,'text/html',page('Not found','<p>Report not found.</p>'));
-    return send(s,200,'text/html',page('Accessibility report',report(sc.report,{inner:true})+`<div class=cta><p>Get this scan on up to 25 pages every week, with alerts when new issues appear.</p><a class=btn href="/pricing">See monitoring plans</a></div>`))}
+    return send(s,200,'text/html; charset=utf-8',P.reportView(sc.report,u.pathname),{'x-robots-tag':'noindex'})}
   if(u.pathname==='/checkout'){const plan=u.searchParams.get('plan');const l=(await links())[plan];L.rpc('event',{kind:'checkout_click',source:plan,session:u.searchParams.get('s')}).catch(()=>{});
     if(!l)return send(s,200,'text/html',page('Coming soon',`<h1>Checkout opens soon</h1><p>Paid monitoring isn't open yet. Run a <a href=/>free scan</a> and leave your email on the results page to save your report.</p>`));
     return send(s,302,'text/plain','',{location:l})}
@@ -66,10 +72,13 @@ const srv=http.createServer(async(q,s)=>{const u=new URL(q.url,BASE);const ip=(q
   if(u.pathname==='/admin/metrics'){if(!ADMIN||u.searchParams.get('t')!==ADMIN)return send(s,401,'text/plain','no');const mt=await L.rpc('metrics');
     const conv=(a,b)=>b?(100*a/b).toFixed(1)+'%':'n/a';const cost=0;const mrr=mt.mrr_cents/100;
     return send(s,200,'text/html',page('Metrics',`<h1>Metrics</h1><table>${Object.entries({...mt,'visit→scan':conv(mt.scans_started,mt.visitors),'scan→email':conv(mt.emails,mt.scans_done),'email→paid':conv(mt.paid_active,mt.emails),'MRR $':mrr,'costs $/mo':cost,'profit $/mo':mrr-cost}).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(typeof v==='object'?JSON.stringify(v):v)}</td></tr>`).join('')}</table>`))}
-  const statics={'/':'index','/pricing':'pricing','/agencies':'agencies','/terms':'terms','/privacy':'privacy','/support':'support','/guides':'guides_index'};
-  if(statics[u.pathname]){const f=fs.readFileSync(__dirname+'/public/'+statics[u.pathname]+'.html','utf8');const [t,d,...rest]=f.split('\n');return send(s,200,'text/html',page(t,rest.join('\n'),d))}
-  if((m=u.pathname.match(/^\/guides\/([a-z0-9-]+)$/))&&GUIDES.includes(m[1]+'.html')){const f=fs.readFileSync(__dirname+'/guides/'+m[1]+'.html','utf8');const [t,d,...rest]=f.split('\n');return send(s,200,'text/html',page(t,rest.join('\n'),d))}
-  send(s,404,'text/html',page('Not found','<h1>Not found</h1>'))
+  const H=x=>x?send(s,200,'text/html; charset=utf-8',x):null;let pg=null;const pn=u.pathname.replace(/\/$/,'')||'/';
+  if(pn==='/')pg=SITE.home();else if(pn==='/pricing')pg=SITE.pricing();else if(pn==='/agencies')pg=SITE.agencies();else if(pn==='/faq')pg=SITE.faq();
+  else if(pn==='/guides')pg=P.guidesIndex();else if(pn==='/rules')pg=P.rulesIndex();else if(pn==='/compare')pg=P.compareIndex();else if(pn==='/alternatives')pg=P.alternatives();
+  else if((m=pn.match(/^\/guides\/([a-z0-9-]+)$/)))pg=P.guide(m[1]);else if((m=pn.match(/^\/rules\/([a-z0-9-]+)$/)))pg=P.rule(m[1]);else if((m=pn.match(/^\/compare\/([a-z0-9-]+)$/)))pg=P.compare(m[1]);
+  else if(['/terms','/privacy','/support'].includes(pn)){const f=fs.readFileSync(__dirname+'/public/'+pn.slice(1)+'.html','utf8');const [t,d,...rest]=f.split('\n');pg=SITE.simple(pn,t.split(' | ')[0],d,rest.join('\n'))}
+  if(pg)return H(pg);
+  send(s,404,'text/html; charset=utf-8',page('Page not found','<h1>Page not found</h1><p>Try the <a href="/">free scan</a>, the <a href="/guides">guides</a> or the <a href="/rules">rule library</a>.</p>'))
  }catch(e){L.logErr('http '+u.pathname,e);if(!s.headersSent)send(s,500,'text/plain','Something went wrong.')}});
 srv.listen(process.env.PORT||8080,()=>console.log('up'));
 if(process.env.STRIPE_SECRET_KEY)S.ensure(BASE).then(l=>console.log('stripe links',l)).catch(e=>L.logErr('stripe_ensure',e));
