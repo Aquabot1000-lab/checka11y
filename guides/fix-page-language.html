@@ -1,7 +1,7 @@
-How to Set the Page Language (WCAG 3.1.1, html lang) | CheckA11y
+How to Set the Page Language (WCAG 3.1.1, html lang) | Welcome Check Web
 Add the lang attribute so screen readers pronounce your page correctly. Steps for HTML, WordPress, Shopify, Wix and Squarespace.
 <h1>How to set the page language (WCAG 3.1.1)</h1>
-<p>Screen readers use the <code>lang</code> attribute on the <code><html></code> tag to choose a pronunciation voice. If it's missing, English text may be read with the wrong accent, or the other way around.</p>
-<h2>The fix</h2><pre><code><html lang="en"></code></pre><p>Use the right code for your content: <code>en</code>, <code>es</code>, <code>fr</code>, <code>en-US</code>. If one section is in another language, mark just that part: <code><p lang="es">Hola</p></code>.</p>
-<h2>By platform</h2><ul><li><b>WordPress:</b> Settings → General → Site Language. Most themes output it automatically through <code>language_attributes()</code>.</li><li><b>Shopify:</b> Most themes use <code>{{ request.locale.iso_code }}</code> in theme.liquid. Check that the <code><html></code> tag includes it.</li><li><b>Wix / Squarespace:</b> set the site language in the site settings. The platform adds the attribute.</li></ul>
+<p>Screen readers use the <code>lang</code> attribute on the <code>&lt;html&gt;</code> tag to choose a pronunciation voice. If it's missing, English text may be read with the wrong accent, or the other way around.</p>
+<h2>The fix</h2><pre><code>&lt;html lang="en"&gt;</code></pre><p>Use the right code for your content: <code>en</code>, <code>es</code>, <code>fr</code>, <code>en-US</code>. If one section is in another language, mark just that part: <code>&lt;p lang="es"&gt;Hola&lt;/p&gt;</code>.</p>
+<h2>By platform</h2><ul><li><b>WordPress:</b> Settings → General → Site Language. Most themes output it automatically through <code>language_attributes()</code>.</li><li><b>Shopify:</b> Most themes use <code>{{ request.locale.iso_code }}</code> in theme.liquid. Check that the <code>&lt;html&gt;</code> tag includes it.</li><li><b>Wix / Squarespace:</b> set the site language in the site settings. The platform adds the attribute.</li></ul>
 <p><a class=btn href=/>Check your page</a></p>
