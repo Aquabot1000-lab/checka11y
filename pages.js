@@ -1,0 +1,80 @@
+const S=require('./site');const L=require('./lib');const G=require('./guides');const R=require('./rules');
+const {layout,esc,BASE,BRAND,crumbs,crumbHtml}=S;
+const CHECKED='October 14, 2026';
+function guidesIndex(){const body=`<div class="article"><div class="wrap">${crumbHtml([['Home','/'],['Guides','/guides']])}<h1>Accessibility fix guides</h1><p class="sub">Plain-English guides to the issues automated scans find most often, with code you can copy.</p>
+<div class="grid g3" style="margin-top:32px">${G.map(g=>`<a class="card" href="/guides/${g.slug}"><h2 style="font-size:21px">${esc(g.h1)}</h2><p>${esc(g.desc)}</p></a>`).join('')}</div>
+<div class="related"><h2>Rule reference</h2><p>Looking for a specific scanner rule? See the <a href="/rules">rule library</a> with one page per axe-core rule.</p></div></div></div>`;
+ return layout({title:'Accessibility Fix Guides (WCAG 2.2) | '+BRAND,desc:'Practical guides to fixing alt text, color contrast, form labels, empty links, keyboard access, headings, captions and more.',path:'/guides',body,ld:[crumbs([['Home','/'],['Guides','/guides']]),{"@type":"ItemList","itemListElement":G.map((g,i)=>({"@type":"ListItem","position":i+1,"url":BASE+'/guides/'+g.slug,"name":g.h1}))}]})}
+function guide(slug){const g=G.find(x=>x.slug===slug);if(!g)return null;const p='/guides/'+slug;const cr=[['Home','/'],['Guides','/guides'],[g.h1,p]];
+ const body=`<article class="article"><div class="wrap narrow">${crumbHtml(cr)}<h1>${esc(g.h1)}</h1><p class="hint">WCAG: ${esc(g.sc)} · Updated ${CHECKED}</p>${g.intro}${g.body}
+<h2>Step by step</h2><ol>${g.steps.map(([n,t])=>`<li><b>${esc(n)}.</b> ${esc(t)}</li>`).join('')}</ol>
+<div class="callout"><p><b>Check your page.</b> Run a <a href="/#scan">free scan</a> to see which of these issues it finds.</p></div>
+<div class="related"><h2>Related scanner rules</h2><ul>${g.rules.filter(r=>R.byId[r]).map(r=>`<li><a href="/rules/${r}">${esc(R.byId[r].help)}</a></li>`).join('')}</ul><h2>More guides</h2><ul>${G.filter(x=>x.slug!==slug).slice(0,6).map(x=>`<li><a href="/guides/${x.slug}">${esc(x.h1)}</a></li>`).join('')}</ul></div>
+<p class="disc">${L.DISCLAIMER}</p></div></article>`;
+ return layout({title:g.title+' | '+BRAND,desc:g.desc,path:p,body,ld:[crumbs(cr),{"@type":"Article","headline":g.title,"description":g.desc,"dateModified":"2026-10-14","author":{"@id":BASE+"/#org"},"publisher":{"@id":BASE+"/#org"},"mainEntityOfPage":BASE+p},{"@type":"HowTo","name":g.h1,"description":g.desc,"step":g.steps.map(([n,t],i)=>({"@type":"HowToStep","position":i+1,"name":n,"text":t}))}]})}
+function rulesIndex(){const cats={};for(const r of R.RULES)(cats[r.catName]=cats[r.catName]||[]).push(r);const cr=[['Home','/'],['Rules','/rules']];
+ const body=`<div class="article"><div class="wrap">${crumbHtml(cr)}<h1>Accessibility rule library</h1><p class="sub">All ${R.RULES.length} automated rules our scanner runs (axe-core ${require('axe-core').version}, WCAG 2.0–2.2 A/AA), each with what it means and how to fix it.</p>
+${Object.keys(cats).sort().map(c=>`<h2 style="font-size:24px;margin-top:40px">${esc(c)}</h2><ul class="rules">${cats[c].map(r=>`<li><a href="/rules/${r.id}">${esc(r.help)}</a> <span class="hint">(${r.id})</span></li>`).join('')}</ul>`).join('')}</div></div>`;
+ return layout({title:'WCAG Accessibility Rule Library ('+R.RULES.length+' rules) | '+BRAND,desc:'Every automated accessibility rule we check, from image-alt to target-size, with what it means, who it affects, and how to fix it.',path:'/rules',body,ld:[crumbs(cr)]})}
+function rule(id){const r=R.byId[id];if(!r)return null;const p='/rules/'+id;const cr=[['Home','/'],['Rules','/rules'],[r.id,p]];const gs=G.filter(g=>g.rules.includes(id));const sib=R.RULES.filter(x=>x.cat===r.cat&&x.id!==id).slice(0,8);
+ const qa=[[`What does the axe rule "${r.id}" check?`,r.desc+'.'],[`How do I fix "${r.help}"?`,r.fix],[`Who is affected by ${r.id} failures?`,r.who]];
+ const body=`<article class="article"><div class="wrap narrow">${crumbHtml(cr)}<p class="eyebrow">${esc(r.catName)} · WCAG ${esc(r.ver)} Level ${r.level}</p><h1>${esc(r.help)}</h1><p class="lede" style="margin-left:0">${esc(r.desc)}.</p>
+<h2>What it means</h2><p>The <code>${esc(r.id)}</code> rule flags elements that fail this check. ${r.sc.length?`It maps to WCAG success criteri${r.sc.length>1?'a':'on'} ${r.sc.map(esc).join(', ')}.`:''}</p>
+<h2>Who it affects</h2><p>${esc(r.who)}</p><h2>How to fix it</h2><p>${esc(r.fix)}</p>${r.code?`<pre><code>${esc(r.code)}</code></pre>`:''}
+<h2>Check it on your site</h2><p>Run a <a href="/#scan">free scan</a>. If this rule fails, the results list the affected elements. Deque, which maintains axe-core, also documents this rule in detail: <a href="${esc(r.helpUrl)}" rel="nofollow noopener">Deque University: ${esc(r.id)}</a>.</p>
+<h2>Quick answers</h2>${S.faqHtml(qa)}
+<div class="related">${gs.length?`<h2>Guides</h2><ul>${gs.map(g=>`<li><a href="/guides/${g.slug}">${esc(g.h1)}</a></li>`).join('')}</ul>`:''}${sib.length?`<h2>Related rules</h2><ul>${sib.map(x=>`<li><a href="/rules/${x.id}">${esc(x.help)}</a></li>`).join('')}</ul>`:''}<p><a href="/rules">All rules</a></p></div>
+<p class="disc">${L.DISCLAIMER}</p></div></article>`;
+ return layout({title:`${r.help} (${r.id}) – How to Fix | ${BRAND}`,desc:`${r.desc}. What the ${r.id} accessibility rule means, who it affects, and how to fix it.`.slice(0,300),path:p,body,ld:[crumbs(cr),{"@type":"TechArticle","headline":`${r.help} (${r.id})`,"description":r.desc,"author":{"@id":BASE+"/#org"},"publisher":{"@id":BASE+"/#org"},"mainEntityOfPage":BASE+p,"dateModified":"2026-10-14"},S.faqLd(qa)]})}
+// Competitor facts: vendor pricing pages, checked on CHECKED. Keep factual; update when prices change.
+const COMP={
+ 'pope-tech':{name:'Pope Tech',src:'https://www.pope.tech/websites/pricing',type:'Automated scanning platform (WAVE engine) with dashboards',price:'Free plan (25 pages); Team from $25/mo billed annually ($30 monthly) for a 50-page tier; Business Plus from $225/mo annually; Professional from $400/mo annually',best:'Organizations that want multi-user dashboards, large page counts and training.'},
+ 'wave':{name:'WAVE (WebAIM)',src:'https://wave.webaim.org/api/',type:'Free browser tool and extension, plus a paid API',price:'Browser tool free; API credits from $0.04 each (250-credit, $10 minimum), down to $0.025 at 10,000+; stand-alone engine licenses from $4,000/yr',best:'Manual, page-by-page review in the browser, and developers who want per-request API pricing.'},
+ 'accessibe':{name:'accessiBe accessWidget',src:'https://accessibe.com/pricing/accesswidget',type:'JavaScript overlay widget installed on your site',price:'Micro $490/yr (or $59/mo) up to 5,000 visits/mo; Growth $1,490/yr; Scale $3,990/yr; custom above 100,000 visits/mo',best:'Teams that specifically want an on-page widget. It works differently from a scanner: it changes the page at runtime instead of reporting issues for you to fix in your code.'}};
+const US={name:BRAND,type:'Automated scanner (axe-core) with weekly monitoring and change emails; installs nothing on your site',price:`Free single-page scans; Solo $29/mo (1 site, 25 pages/week); Studio $79/mo (5 sites); Agency $249/mo (25 sites, 50 pages); Agency 100 $699/mo`,best:'Small businesses and agencies who want a free check and inexpensive weekly monitoring, and will fix issues in their own code or CMS.'};
+function cmpTable(list){return `<div class="tablewrap"><table class="cmp"><caption class="vh">Comparison of accessibility tools</caption><thead><tr><th scope="col">Tool</th><th scope="col">What it is</th><th scope="col">Published pricing</th><th scope="col">Best for</th></tr></thead><tbody>${list.map(c=>`<tr><th scope="row">${esc(c.name)}</th><td>${esc(c.type)}</td><td>${esc(c.price)}${c.src?` <a href="${c.src}" rel="nofollow noopener">(source)</a>`:''}</td><td>${esc(c.best)}</td></tr>`).join('')}</tbody></table></div>`}
+const NOTE=`<p class="hint">Competitor prices are as listed on each vendor’s own pricing page, checked ${CHECKED}. Prices change; confirm on the vendor’s site. Names are trademarks of their owners; we are not affiliated with them.</p>`;
+function compareIndex(){const cr=[['Home','/'],['Compare','/compare']];return layout({title:'Accessibility Tool Comparisons | '+BRAND,desc:'Factual, sourced comparisons of Welcome Check Web with Pope Tech, WAVE and accessiBe: what each tool is, published pricing, and who it suits.',path:'/compare',ld:[crumbs(cr)],body:`<div class="article"><div class="wrap">${crumbHtml(cr)}<h1>Comparisons</h1><p class="sub">How we differ from other accessibility tools, with sourced pricing.</p><div class="grid g3" style="margin-top:28px">${Object.entries(COMP).map(([k,c])=>`<a class="card" href="/compare/${k}"><h2 style="font-size:21px">${BRAND} vs ${esc(c.name)}</h2><p>${esc(c.type)}</p></a>`).join('')}<a class="card" href="/alternatives"><h2 style="font-size:21px">All alternatives</h2><p>Side-by-side table.</p></a></div></div></div>`})}
+function compare(k){const c=COMP[k];if(!c)return null;const p='/compare/'+k;const cr=[['Home','/'],['Compare','/compare'],[c.name,p]];
+ const qa=[[`Is ${BRAND} cheaper than ${c.name}?`,`${BRAND} monitoring starts at $29/month and single-page scans are free. ${c.name}'s published pricing: ${c.price}. Which costs less depends on how many sites and pages you need.`],[`What is the main difference between ${BRAND} and ${c.name}?`,`${BRAND}: ${US.type}. ${c.name}: ${c.type}.`]];
+ return layout({title:`${BRAND} vs ${c.name}: Pricing and Differences | ${BRAND}`,desc:`A factual comparison of ${BRAND} and ${c.name}: what each tool does, published pricing (checked ${CHECKED}), and who each suits.`,path:p,ld:[crumbs(cr),S.faqLd(qa)],body:`<article class="article"><div class="wrap narrow">${crumbHtml(cr)}<h1>${BRAND} vs ${esc(c.name)}</h1><p class="lede" style="margin-left:0">Both can play a part in accessibility work. Here is what each one is and what it costs, so you can pick what fits.</p>${cmpTable([US,c])}${NOTE}
+<h2>Questions</h2>${S.faqHtml(qa)}<h2>Whichever you choose</h2><p>No automated tool or widget finds or fixes every barrier. Combine automated checks with manual testing, ideally including people who use assistive technology.</p><p><a href="/alternatives">See all alternatives</a> · <a href="/#scan">Try a free scan</a></p><p class="disc">${L.DISCLAIMER}</p></div></article>`})}
+function alternatives(){const cr=[['Home','/'],['Alternatives','/alternatives']];const all=[US,...Object.values(COMP)];
+ return layout({title:'Accessibility Checker Alternatives Compared (2026) | '+BRAND,desc:'A sourced comparison of accessibility scanners and widgets: Welcome Check Web, Pope Tech, WAVE and accessiBe, with published pricing.',path:'/alternatives',ld:[crumbs(cr),{"@type":"ItemList","itemListElement":all.map((c,i)=>({"@type":"ListItem","position":i+1,"name":c.name}))}],body:`<article class="article"><div class="wrap">${crumbHtml(cr)}<h1>Accessibility checker alternatives</h1><p class="lede" style="margin-left:0">Scanners report issues for you to fix. Overlays change the page in the visitor’s browser. Here is how common options compare.</p>${cmpTable(all)}${NOTE}
+<h2>Free tools worth knowing</h2><ul><li><b>axe DevTools browser extension</b> (Deque): free extension using the same axe-core engine we use.</li><li><b>Lighthouse</b>: built into Chrome DevTools, includes an accessibility audit based on axe-core.</li><li><b>WAVE extension</b>: free visual overlay of issues in your browser.</li></ul><p>Those are great for checking one page while you work. ${BRAND} adds weekly multi-page monitoring and change emails.</p><p class="disc">${L.DISCLAIMER}</p></div></article>`})}
+// report view
+function reportView(r,link){const all=r.pages.flatMap(p=>(p.violations||[]).map(v=>({...v,page:p.url})));const sc=S.score(all);const c=S.countsBy(all);
+ const ring=`<div class="ring" style="--rc:${sc>=90?'#1a7a38':sc>=60?'#a4400a':'#b3261e'}"><svg viewBox="0 0 148 148" aria-hidden="true"><circle class="trk" cx="74" cy="74" r="62"/><circle class="val" cx="74" cy="74" r="62" data-score="${sc}"/></svg><b><span>${sc}<small>of 100</small></span></b></div>`;
+ const body=`<div class="wrap" style="padding:56px 24px"><div class="result"><div class="summary">${ring}<div><p class="hint" style="margin:0">Automated scan · ${esc(new Date(r.scannedAt).toUTCString())}</p><h1 style="font-size:clamp(28px,4vw,40px);word-break:break-all">${esc(r.url)}</h1><p>${r.pagesScanned} page${r.pagesScanned>1?'s':''} scanned · <b>${r.totalIssues}</b> issue${r.totalIssues===1?'':'s'} · <b>${r.criticalOrSerious}</b> critical or serious</p>
+<div class="counts">${['critical','serious','moderate','minor'].map(k=>`<span class="tag">${c[k]} ${k}</span>`).join('')}</div></div></div>
+<p class="disc">${L.DISCLAIMER} The score reflects only automatically detectable issues.</p>
+${r.pages.map(p=>`<h2 style="font-size:20px;margin-top:32px;word-break:break-all">${esc(p.url)}</h2>${p.warning?`<p class="warn">${esc(p.warning)}</p>`:''}${p.error?`<p class="err">Could not scan this page: ${esc(p.error)}</p>`:(p.violations.length?`<ol class="issues">${p.violations.map(v=>`<li class="issue ${esc(v.impact)}"><h3>${esc(v.help)}</h3><div class="meta"><span class="imp">${esc(v.impact)}</span><span>${v.count} element${v.count>1?'s':''}</span>${R.byId[v.id]?`<a href="/rules/${esc(v.id)}">How to fix</a>`:`<a href="${esc(v.helpUrl)}" rel="nofollow noopener">How to fix</a>`}</div>${v.examples?.length?`<p style="margin:10px 0 0">${v.examples.map(x=>`<code>${esc(x)}</code>`).join(' ')}</p>`:''}</li>`).join('')}</ol>`:'<p>No automatically detectable issues on this page. Manual testing is still recommended.</p>')}`).join('')}
+<div class="unlock"><h2 style="font-size:22px">Scan this site every week</h2><p>Monitoring re-scans up to 25 pages weekly and emails you what changed.</p><a class="btn" href="/pricing">See monitoring plans</a></div></div></div>`;
+ return layout({title:'Accessibility report: '+r.url+' | '+BRAND,desc:'Automated accessibility scan results.',path:link||'/r',body,noindex:true})}
+function llms(){return `# ${BRAND}
+
+> ${BRAND} is a free automated website accessibility checker. It loads a public web page in Chrome and runs the open-source axe-core engine with WCAG 2.0, 2.1 and 2.2 Level A and AA rules (${R.RULES.length} rules), then returns a score and a prioritized list of issues. Paid plans add weekly multi-page monitoring with change emails.
+
+Important: ${L.DISCLAIMER}
+
+## Key facts
+- Free single-page scan, no account required: ${BASE}/
+- Engine: axe-core ${require('axe-core').version}; rule tags wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa
+- Installs nothing on the scanned site (not an overlay or widget)
+- Pricing (USD/month): ${Object.values(L.PLANS).map(p=>`${p.name} $${p.cents/100} (${p.sites} site${p.sites>1?'s':''}, ${p.pages} pages each, weekly)`).join('; ')}. Month to month; refund on request within 30 days of first charge.
+- Score: starts at 100, reduced per detected issue type weighted by impact and number of affected elements; reflects automated findings only.
+
+## Pages
+- [Pricing](${BASE}/pricing)
+- [FAQ](${BASE}/faq)
+- [For agencies](${BASE}/agencies)
+- [Fix guides](${BASE}/guides)
+- [Rule library](${BASE}/rules): one page per axe-core rule
+- [Alternatives](${BASE}/alternatives): sourced comparison with Pope Tech, WAVE, accessiBe
+
+## Guides
+${G.map(g=>`- [${g.h1}](${BASE}/guides/${g.slug}): ${g.desc}`).join('\n')}
+`}
+function sitemap(){const u=['/','/pricing','/agencies','/faq','/guides','/rules','/compare','/alternatives','/support','/terms','/privacy',...G.map(g=>'/guides/'+g.slug),...Object.keys(COMP).map(k=>'/compare/'+k),...R.RULES.map(r=>'/rules/'+r.id)];
+ return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${u.map(p=>`<url><loc>${BASE}${p}</loc><lastmod>2026-10-14</lastmod></url>`).join('')}</urlset>`}
+module.exports={guidesIndex,guide,rulesIndex,rule,compareIndex,compare,alternatives,reportView,llms,sitemap,COMP};
