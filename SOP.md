@@ -17,3 +17,9 @@ Secrets: /workspace/profit/.a11y.env (box only, chmod 600). Never commit.
 ## Kill / scale rules
 - Kill: 0 paid after 90 days live with at least 500 free scans, OR any costs with revenue below costs for 2 months.
 - Scale: >=5 paid and churn <10%/mo: build white-label logos and programmatic guides.
+## Free-tier sleep/pause (decision: no keep-alive pinging)
+- Render free web services spin down after 15 min idle, and Render limits free instance hours per workspace each month. A keep-alive pinger would burn the shared free hours the OverAssessed workspace may also use, and it works against the purpose of the free tier. NOT done. The cost is a 30-60s cold start for the first visitor. Fix when revenue allows: Render Starter (owner spend approval).
+- Supabase free projects pause after about 1 week of inactivity. Real app traffic (scans and events write to the DB) counts as activity. No artificial pings. If it pauses, restore with the Supabase restore_project tool, which is free.
+- The weekly GitHub Actions trigger is a real product job (weekly monitoring), not a keep-alive.
+## SSRF guard
+- netguard.js resolves DNS and blocks private, loopback, link-local, CGNAT, metadata and multicast ranges on every browser request, including redirects and subresources. Locally tested: 127.0.0.1, [::1], 169.254.169.254, a localtest.me name and an httpbin redirect to 127.0.0.1 were all blocked.
