@@ -9,7 +9,7 @@ async function ensure(base){ if(!K()) return LINKS;
   for(const [id,p] of Object.entries(PLANS)){ if(process.env['LINK_'+id.toUpperCase()]){LINKS[id]=process.env['LINK_'+id.toUpperCase()];continue}
     const lk='a11yscan_'+id+'_monthly';
     let price=(await api('prices?lookup_keys[]='+lk+'&limit=1',null,'GET')).data[0];
-    if(!price){const prod=await api('products',{name:'Accessibility monitoring – '+p.name,'metadata[project]':'a11yscan','metadata[plan]':id});
+    if(!price){const prod=await api('products',{name:'Welcome Check Web – accessibility monitoring ('+p.name+')','metadata[project]':'a11yscan','metadata[plan]':id});
       price=await api('prices',{product:prod.id,currency:'usd',unit_amount:p.cents,'recurring[interval]':'month',lookup_key:lk,'metadata[project]':'a11yscan'});}
     const pl=await api('payment_links',{'line_items[0][price]':price.id,'line_items[0][quantity]':1,'metadata[project]':'a11yscan','metadata[plan]':id,'subscription_data[metadata][project]':'a11yscan','subscription_data[metadata][plan]':id,'after_completion[type]':'redirect','after_completion[redirect][url]':base+'/thanks'});
     LINKS[id]=pl.url;}

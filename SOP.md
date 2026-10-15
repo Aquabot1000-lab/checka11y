@@ -23,3 +23,9 @@ Secrets: /workspace/profit/.a11y.env (box only, chmod 600). Never commit.
 - The weekly GitHub Actions trigger is a real product job (weekly monitoring), not a keep-alive.
 ## SSRF guard
 - netguard.js resolves DNS and blocks private, loopback, link-local, CGNAT, metadata and multicast ranges on every browser request, including redirects and subresources. Locally tested: 127.0.0.1, [::1], 169.254.169.254, a localtest.me name and an httpbin redirect to 127.0.0.1 were all blocked.
+## Oct 14, 2026 8:00 PM CT status
+- Name: Welcome Check Web CONFLICTS with Checka11y.css (an existing open-source a11y tool; checka11y.com registered). ScanAccessible conflicts with Scan Accessibility / ScanAccess. Chosen: **AccessWren**. accesswren.com unregistered (Verisign RDAP 404). Web search found no software/accessibility company using the name. USPTO not checked; the search system needs a browser session (to do before spending on brand).
+- Domain price: Cloudflare Registrar $10.46/yr (register = renew); Porkbun $11.08/yr.
+- Stripe: STRIPE_SECRET_KEY in env starts with mk_, which is the key ID, not the secret. The API returned 401. Nothing created.
+- STRIPE_WEBHOOK_SECRET in env is only 10 chars (real ones are ~38) and likely a placeholder. Set on Render anyway; replace it.
+- SENDGRID_API_KEY in env is 32 chars without the SG. prefix; the API returned 401/403. Likely also a key ID. Not set on Render. SendGrid code is wired (needs SENDGRID_API_KEY + MAIL_FROM).
