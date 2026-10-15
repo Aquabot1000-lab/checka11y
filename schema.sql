@@ -1,0 +1,1 @@
+-- Live schema is managed by Supabase migrations init_backbone, rpc_extra, rpc3_due (project nhqwobxwqudyiboodzef). See DB tables: customers, subscriptions, sites, scans, issues, events, error_log, app_secrets; RPCs rpc/rpc2/rpc3 (token-checked).
