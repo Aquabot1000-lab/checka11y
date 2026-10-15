@@ -53,7 +53,7 @@ ${r.pages.map(p=>`<h2 style="font-size:20px;margin-top:32px;word-break:break-all
  return layout({title:'Accessibility report: '+r.url+' | '+BRAND,desc:'Automated accessibility scan results.',path:link||'/r',body,noindex:true})}
 function llms(){return `# ${BRAND}
 
-> ${BRAND} is a free automated website accessibility checker. It loads a public web page in Chrome and runs the open-source axe-core engine with WCAG 2.0, 2.1 and 2.2 Level A and AA rules (${R.RULES.length} rules), then returns a score and a prioritized list of issues. Paid plans add weekly multi-page monitoring with change emails.
+> ${BRAND} is white-label accessibility monitoring for web agencies. It scans each client site weekly in Chrome with the open-source axe-core engine (WCAG 2.0, 2.1 and 2.2 Level A and AA rules, ${R.RULES.length} rules), tracks new, fixed and reappeared issues, gives a suggested fix per issue, and produces HTML/PDF reports with the agency's own name and logo. A free single-page scan is also available.
 
 Important: ${L.DISCLAIMER}
 
@@ -61,7 +61,9 @@ Important: ${L.DISCLAIMER}
 - Free single-page scan, no account required: ${BASE}/
 - Engine: axe-core ${require('axe-core').version}; rule tags wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa
 - Installs nothing on the scanned site (not an overlay or widget)
-- Pricing (USD/month): ${Object.values(L.PLANS).map(p=>`${p.name} $${p.cents/100} (${p.sites} site${p.sites>1?'s':''}, ${p.pages} pages each, weekly)`).join('; ')}. Month to month; refund on request within 30 days of first charge.
+- Founding agency offer: 30% off for life for the first ${L.FOUNDING.slots} agencies.
+- Live demo: ${BASE}/demo ; sample white-label report: ${BASE}/sample-report
+- Pricing (USD/month): ${Object.values(L.PLANS).filter(p=>!p.hidden).map(p=>`${p.name} $${p.cents/100} (${p.sites} site${p.sites>1?'s':''}, ${p.pages} pages each, weekly)`).join('; ')}. Month to month; refund on request within 30 days of first charge.
 - Score: starts at 100, reduced per detected issue type weighted by impact and number of affected elements; reflects automated findings only.
 
 ## Pages
@@ -75,6 +77,6 @@ Important: ${L.DISCLAIMER}
 ## Guides
 ${G.map(g=>`- [${g.h1}](${BASE}/guides/${g.slug}): ${g.desc}`).join('\n')}
 `}
-function sitemap(){const u=['/','/pricing','/agencies','/faq','/guides','/rules','/compare','/alternatives','/support','/terms','/privacy',...G.map(g=>'/guides/'+g.slug),...Object.keys(COMP).map(k=>'/compare/'+k),...R.RULES.map(r=>'/rules/'+r.id)];
+function sitemap(){const u=['/','/pricing','/demo','/sample-report','/agencies','/faq','/guides','/rules','/compare','/alternatives','/support','/terms','/privacy',...G.map(g=>'/guides/'+g.slug),...Object.keys(COMP).map(k=>'/compare/'+k),...R.RULES.map(r=>'/rules/'+r.id)];
  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${u.map(p=>`<url><loc>${BASE}${p}</loc><lastmod>2026-10-14</lastmod></url>`).join('')}</urlset>`}
 module.exports={guidesIndex,guide,rulesIndex,rule,compareIndex,compare,alternatives,reportView,llms,sitemap,COMP};

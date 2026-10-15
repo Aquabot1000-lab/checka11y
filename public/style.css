@@ -85,3 +85,12 @@ footer.site h2{font-size:14px;color:var(--ink);letter-spacing:0;margin:0 0 10px}
 .reveal{opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}.reveal.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.calc h3{font-size:20px}.calc-in{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));align-items:end}.calc label{display:block;font-weight:600;font-size:15px;margin-bottom:6px}.calc input[type=range]{width:100%;accent-color:var(--accent)}.calc output{font-size:14px;color:var(--muted)}
+.money{display:flex;align-items:center;gap:6px;border:1px solid #8a8a92;border-radius:12px;padding:0 12px;background:#fff}.money input{border:0;font:inherit;font-size:18px;padding:10px 0;width:100%;background:transparent}.money:focus-within{outline:3px solid var(--accent);outline-offset:2px}.money input:focus{outline:none}
+label.chk{display:flex;gap:8px;align-items:center;font-weight:500}label.chk input{width:18px;height:18px;accent-color:var(--accent)}
+.calc-out{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}.calc-out div{background:#f6f6f9;border-radius:14px;padding:14px 16px}.calc-out span{display:block;font-size:13px;color:var(--muted)}.calc-out b{font-size:24px;letter-spacing:-.02em}.calc-out .hl{background:var(--accent-soft)}.calc-out .hl b{color:#0a4a96}
+@media(max-width:600px){.calc-out{grid-template-columns:1fr}}
+.dash-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.chg{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;margin:2px 2px 2px 0}.chg.new{background:#fdecea;color:#8a1c14}.chg.re{background:#fff1d6;color:#6b4100}.chg.fix{background:#e6f4ea;color:#14592a}
+.trend{display:flex;gap:12px;align-items:end;height:180px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:16px}.tbar{flex:1;display:flex;flex-direction:column;justify-content:end;align-items:center;height:100%;gap:6px}.tbar i{display:block;width:100%;max-width:56px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,#5b8def,var(--accent))}.tbar span{font-size:12px;color:var(--muted)}
+.plan .btn+.btn{margin-top:8px}
