@@ -2,7 +2,7 @@ const L=require('./lib');
 const BASE=(process.env.BASE_URL||'http://localhost:8080').replace(/\/$/,'');
 const BRAND='Welcome Check Web';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const LOGO=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="${BRAND} logo"><defs><linearGradient id="wg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0a6be0"/><stop offset="1" stop-color="#6a3df0"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#wg)"/><circle cx="32" cy="32" r="18" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="5"/><path d="M32 14a18 18 0 1 1-17.1 12.4" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M24 32.5l5.5 5.5L41 26.5" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const LOGO=`<svg role="img" aria-label="${BRAND} logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="wg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b2035"/><stop offset="1" stop-color="#0b0e1a"/></linearGradient><linearGradient id="wp2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5fa8ff" stop-opacity=".55"/><stop offset=".55" stop-color="#5fa8ff"/><stop offset="1" stop-color="#4ee0b0"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#wg2)"/> <path d="M10 35h9l4.5-9 6.5 16 4-8 4.5 5.5L52 23" fill="none" stroke="url(#wp2)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const LOGO_INLINE=LOGO.replace('role="img" aria-label="'+BRAND+' logo"','aria-hidden="true" focusable="false"');
 const PRICE=c=>'$'+(c/100).toFixed(0);
 const ORG={"@type":"Organization","@id":BASE+"/#org","name":BRAND,"url":BASE+"/","logo":BASE+"/logo.svg"};
@@ -12,7 +12,7 @@ function layout({title,desc,path='/',body,ld=[],ogTitle,noindex}){
   const url=BASE+(path==='/'?'/':path);const graph=[ORG,...ld];
   body=body.replace(/<pre>/g,'<pre tabindex="0">');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="description" content="${esc(desc)}">${noindex?'<meta name="robots" content="noindex">':`<link rel="canonical" href="${url}">`}
-<meta name="theme-color" content="#fbfbfd"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/og.jpg">
+<meta name="theme-color" content="#fbfbfd"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/icon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
 <meta property="og:type" content="website"><meta property="og:site_name" content="${BRAND}"><meta property="og:title" content="${esc(ogTitle||title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${BASE}/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/static/style.css"><script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@graph":graph}).replace(/</g,'\\u003c')}</script><script>document.documentElement.className='js'</script></head>
 <body><a class="skip" href="#main">Skip to content</a>

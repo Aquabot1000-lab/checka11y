@@ -4,6 +4,7 @@ const BASE=process.env.BASE_URL||'http://localhost:8080';const ADMIN=process.env
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const SITE=require('./site'),P=require('./pages'),zlib=require('zlib');
 const page=(title,body,desc='')=>SITE.layout({title:title+' | '+SITE.BRAND,desc:desc||title,path:'/x',body:`<div class="article"><div class="wrap narrow">${body}</div></div>`,noindex:true});
+const ICONS={};for(const n of ['icon-32','icon-180','icon-192','icon-512','apple-touch-icon']){const p=__dirname+'/public/'+n+'.b64';if(fs.existsSync(p))ICONS['/'+n+'.png']=Buffer.from(fs.readFileSync(p,'utf8'),'base64')}
 const OG=fs.existsSync(__dirname+'/public/og.b64')?Buffer.from(fs.readFileSync(__dirname+'/public/og.b64','utf8'),'base64'):null;
 let busy=0;const MAXC=+process.env.MAX_CONCURRENT||1;const queue=[];
 function slot(){return new Promise(r=>{if(busy<MAXC){busy++;r()}else queue.push(r)})}
@@ -40,6 +41,8 @@ const srv=http.createServer(async(q,s)=>{s.req=q;const u=new URL(q.url,BASE);con
   if(u.pathname.startsWith('/static/')){const f=path.join(__dirname,'public',path.basename(u.pathname));return fs.existsSync(f)?send(s,200,f.endsWith('.css')?'text/css; charset=utf-8':'application/javascript; charset=utf-8',fs.readFileSync(f),{'cache-control':'public, max-age=86400'}):send(s,404,'text/plain','not found')}
   if(u.pathname==='/logo.svg'||u.pathname==='/favicon.svg')return send(s,200,'image/svg+xml',SITE.LOGO,{'cache-control':'public, max-age=604800'});
   if(u.pathname==='/og.jpg'&&OG)return send(s,200,'image/jpeg',OG,{'cache-control':'public, max-age=604800'});
+  if(ICONS[u.pathname])return send(s,200,'image/png',ICONS[u.pathname],{'cache-control':'public, max-age=604800'});
+  if(u.pathname==='/site.webmanifest')return send(s,200,'application/manifest+json',JSON.stringify({name:SITE.BRAND,short_name:'Welcome Check',icons:[{src:'/icon-192.png',sizes:'192x192',type:'image/png'},{src:'/icon-512.png',sizes:'512x512',type:'image/png'}],theme_color:'#0b0e1a',background_color:'#fbfbfd',display:'standalone',start_url:'/'}),{'cache-control':'public, max-age=86400'});
   if(u.pathname==='/favicon.ico')return send(s,301,'text/plain','',{location:'/favicon.svg'});
   if(u.pathname==='/llms.txt')return send(s,200,'text/plain; charset=utf-8',P.llms());
   if(u.pathname==='/robots.txt')return send(s,200,'text/plain',`User-agent: *\nAllow: /\nDisallow: /r/\nDisallow: /admin/\nDisallow: /api/\nDisallow: /checkout\nDisallow: /cancel\nSitemap: ${BASE}/sitemap.xml`);
