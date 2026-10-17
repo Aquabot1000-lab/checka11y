@@ -10,10 +10,10 @@ const FOUNDING={pct:30,slots:10,plans:{studio:5500,agency:17400,agencyplus:48900
 // Email: provider-agnostic. Set RESEND_API_KEY + MAIL_FROM to enable; otherwise logged as pending (owner gate).
 async function sendMail(to,subject,html){
   if(process.env.SENDGRID_API_KEY&&process.env.MAIL_FROM){
-    const r=await fetch('https://api.sendgrid.com/v3/mail/send',{method:'POST',headers:{Authorization:'Bearer '+process.env.SENDGRID_API_KEY,'content-type':'application/json'},body:JSON.stringify({personalizations:[{to:[{email:to}]}],from:{email:process.env.MAIL_FROM,name:process.env.MAIL_FROM_NAME||'Accessibility monitoring'},subject,content:[{type:'text/html',value:html}],tracking_settings:{click_tracking:{enable:false}}})});
+    const r=await fetch('https://api.sendgrid.com/v3/mail/send',{method:'POST',headers:{Authorization:'Bearer '+process.env.SENDGRID_API_KEY,'content-type':'application/json'},body:JSON.stringify({personalizations:[{to:[{email:to}]}],from:{email:process.env.MAIL_FROM,name:process.env.MAIL_FROM_NAME||'Welcome Check Web team'},...(process.env.MAIL_REPLY_TO?{reply_to:{email:process.env.MAIL_REPLY_TO,name:process.env.MAIL_FROM_NAME||'Welcome Check Web team'}}:{}),subject,content:[{type:'text/html',value:html}],tracking_settings:{click_tracking:{enable:false}}})});
     if(!r.ok){await logErr('sendgrid',r.status+' '+(await r.text()).slice(0,200));return false}
     await rpc('event',{kind:'email_sent',meta:{subject}}).catch(()=>{});return true}
   if(!process.env.RESEND_API_KEY){await rpc('event',{kind:'email_pending',meta:{to,subject}}).catch(()=>{});return false}
-  const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'content-type':'application/json'},body:JSON.stringify({from:process.env.MAIL_FROM,to,subject,html})});
+  const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'content-type':'application/json'},body:JSON.stringify({from:process.env.MAIL_FROM,to,subject,html,...(process.env.MAIL_REPLY_TO?{reply_to:process.env.MAIL_REPLY_TO}:{})})});
   if(!r.ok) await logErr('sendMail',await r.text()); return r.ok }
 module.exports={FOUNDING,rpc,rpc2,logErr,DISCLAIMER,PLANS,sendMail};
